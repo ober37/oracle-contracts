@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  geth:
+    image: geth:latest
+    container_name: geth
+    hostname: geth
+
+    build:
+      context: ./build
+      dockerfile: Dockerfile.geth
+
+    command: "--ropsten --ws --ipcdisable --ws.addr 0.0.0.0 --ws.origins=\"*\" --datadir /geth"
+
+    volumes:
+      - "../software/geth/.geth-ropsten:/geth"
+
+    ports:
+    - "8546:8546"
