@@ -2,44 +2,63 @@ version: "3.9"
 
 services:
   geth:
-    image: geth:latest
+    image: ${GETH_IMAGE}:${GETH_VERSION}
     container_name: geth
-    hostname: geth
+    hostname: ${GETH_HOSTNAME}
     env_file:
       - ./services/geth/.env
-
     build:
       context: ./services/geth/
       dockerfile: ./Dockerfile
-
-    command: "--ropsten --ws --ipcdisable --ws.addr 0.0.0.0 --ws.origins=\"*\" --datadir /geth"
-
+    command: --ropsten --ws --ipcdisable --ws.addr 0.0.0.0 --ws.origins=\"*\" --datadir ${GETH_HOST_PATH}
     volumes:
-      - "../services/geth/.geth-ropsten:/geth"
-
+      - eth_data:${GETH_HOST_PATH}
     ports:
-    - "8546:8546"
+    - ${GETH_HOST_PORT}:${GETH_LISTEN_PORT}
 
   chainlink:
-    image: chainlink_node:latest
+    image: ${CHAINLINK_IMAGE}:${CHAINLINK_VERSION}
     container_name: chainlink
-    hostname: chainlink
-
+    hostname: ${CHAINLIST_HOSTNAME}
     env_file:
       - ./services/chainlink/.env
-
+    environment:
+    - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:${POSTGRES_LISTEN_PORT}/${POSTGRES_DB}?sslmode=disable
+    - ETH_URL=ws://${GETH_HOSTNAME}:${GETH_LISTEN_PORT}
     depends_on:
       geth:
         condition: service_started
-
+      postgres:
+        condition: service_started
     build:
       context: ./services/chainlink/
       dockerfile: ./Dockerfile
-
-    command: "local n"
-
+    command: local n --password /secrets/wallet_password.txt --api /secrets/api_creds.txt 
     volumes:
-      - "../services/chainlink/.chainlink-ropsten:/chainlink"
-
+      - chainlink_data:${CHAINLINK_HOST_PATH}
+      - ./services/chainlink/secrets:/secrets
     ports:
-    - "6688:6688"
+    - ${CHAINLINK_HOST_PORT}:${CHAINLINK_LISTEN_PORT}
+
+  postgres:
+    image: ${POSTGRES_IMAGE}:${POSTGRES_VERSION}
+    container_name: postgres
+    hostname: ${POSTGRES_HOSTNAME}
+    env_file:
+      - ./services/postgres/.env
+    environment:
+      - POSTGRES_USER:${POSTGRES_USER}
+      - POSTGRES_PASSWORD:${POSTGRES_PASSWORD}
+      - POSTGRES_DB:${POSTGRES_DB}
+    build:
+      context: ./services/postgres/
+      dockerfile: ./Dockerfile
+    volumes:
+      - database_data:${POSTGRES_HOST_PATH}
+    expose:
+    - ${POSTGRES_LISTEN_PORT}
+
+volumes:
+  eth_data:
+  chainlink_data:
+  database_data:
