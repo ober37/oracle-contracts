@@ -1,1 +1,2 @@
-software/geth/.geth-ropsten
+services/geth/.*
+services/chainlink/.*

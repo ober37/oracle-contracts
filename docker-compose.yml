@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  geth:
+    image: geth:latest
+    container_name: geth
+    hostname: geth
+    env_file:
+      - ./services/geth/.env
+
+    build:
+      context: ./services/geth/
+      dockerfile: ./Dockerfile
+
+    command: "--ropsten --ws --ipcdisable --ws.addr 0.0.0.0 --ws.origins=\"*\" --datadir /geth"
+
+    volumes:
+      - "../services/geth/.geth-ropsten:/geth"
+
+    ports:
+    - "8546:8546"
+
+  chainlink:
+    image: chainlink_node:latest
+    container_name: chainlink
+    hostname: chainlink
+
+    env_file:
+      - ./services/chainlink/.env
+
+    depends_on:
+      geth:
+        condition: service_started
+
+    build:
+      context: ./services/chainlink/
+      dockerfile: ./Dockerfile
+
+    command: "local n"
+
+    volumes:
+      - "../services/chainlink/.chainlink-ropsten:/chainlink"
+
+    ports:
+    - "6688:6688"
