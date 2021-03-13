@@ -10,7 +10,7 @@ services:
     build:
       context: ./services/geth/
       dockerfile: ./Dockerfile
-    command: --ropsten --ws --ipcdisable --ws.addr 0.0.0.0 --ws.origins=\"*\" --datadir ${GETH_HOST_PATH}
+    command: --ropsten --syncmode "fast" --ws --ipcdisable --ws.addr 0.0.0.0 --ws.origins="*" --datadir ${GETH_HOST_PATH}
     volumes:
       - eth_data:${GETH_HOST_PATH}
     ports:
